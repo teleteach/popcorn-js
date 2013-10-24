@@ -10,7 +10,9 @@
    * End is the time that you want this plug-in to stop executing
    * Text is the text that you want to appear in the target
    * Target is the id of the document element that the text needs to be
-   * attached to, this target element must exist on the DOM
+   * attached to, this target element must exist on the DOM (default: "footnote-container")
+   * Display is the css display style attached in order to display the footnote
+   * while it is active (default: "inline")
    *
    * @param {Object} options
    *
@@ -29,7 +31,7 @@
     manifest: {
       about: {
         name: "Popcorn Footnote Plugin",
-        version: "0.2",
+        version: "0.2.1",
         author: "@annasob, @rwaldron",
         website: "annasob.wordpress.com"
       },
@@ -49,7 +51,8 @@
           type: "text",
           label: "Text"
         },
-        target: "footnote-container"
+        target: "footnote-container",
+        display: "inline"
       }
     },
 
@@ -60,6 +63,7 @@
       options._container = document.createElement( "div" );
       options._container.style.display = "none";
       options._container.innerHTML  = options.text;
+      options.display = options.display || "inline";
 
       target.appendChild( options._container );
     },
@@ -71,7 +75,7 @@
      * options variable
      */
     start: function( event, options ){
-      options._container.style.display = "inline";
+      options._container.style.display = options.display;
     },
 
     /**

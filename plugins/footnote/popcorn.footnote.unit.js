@@ -1,7 +1,7 @@
 test( "Popcorn Footnote Plugin", function() {
 
   var popped = Popcorn( "#video" ),
-      expects = 8,
+      expects = 10,
       count = 0,
       setupId,
       footnotediv = document.getElementById( "footnotediv" );
@@ -33,12 +33,19 @@ test( "Popcorn Footnote Plugin", function() {
     end: 4,
     text: "Visit webmademovies.org for more details",
     target: "footnotediv"
+  })
+  .footnote({
+    start: 4,
+    end: 6,
+    text: "Visit webmademovies.org for even more details",
+    target: "footnotediv",
+    display: "block"
   });
 
   setupId = popped.getLastTrackEventId();
 
   popped.exec( 0, function() {
-    equal( footnotediv.childElementCount, 2, "footnotediv now has two inner elements" );
+    equal( footnotediv.childElementCount, 3, "footnotediv now has three inner elements" );
     plus();
     equal( footnotediv.children[ 0 ].innerHTML, "This video made exclusively for drumbeat.org", "footnote displaing correct information" );
     plus();
@@ -52,11 +59,19 @@ test( "Popcorn Footnote Plugin", function() {
   });
 
   popped.exec( 4, function() {
-    ok( footnotediv.children[ 1 ].style.display === "none" &&  footnotediv.children[ 0 ].style.display === 'none', "footnote are no longer vidible on the page" );
+    ok( footnotediv.children[ 1 ].style.display === "none" &&  footnotediv.children[ 0 ].style.display === 'none', "first two footnotes are no longer vidible on the page" );
+    plus();
+
+    equal( footnotediv.children[ 2 ].style.display, "block", "third footnote is visible on the page" );
+    plus();
+  });
+
+  popped.exec( 7, function() {
+    ok( footnotediv.children[ 2 ].style.display === "none" &&  footnotediv.children[ 1 ].style.display === 'none' &&  footnotediv.children[ 0 ].style.display === 'none', "footnotes are no longer vidible on the page" );
     plus();
 
     popped.pause().removeTrackEvent( setupId );
-    ok( !footnotediv.children[ 1 ], "removed footnote was properly destroyed" );
+    ok( !footnotediv.children[ 2 ], "removed footnote was properly destroyed" );
     plus();
   });
   popped.play().volume( 0 );
