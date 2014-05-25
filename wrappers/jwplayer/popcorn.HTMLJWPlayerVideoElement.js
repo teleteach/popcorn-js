@@ -30,9 +30,8 @@
     if ( !jwLoaded ) {
       if ( !window.jwplayer ) {
         var tag = document.createElement( "script" );
-        var protocol = window.location.protocol === "file:" ? "http:" : "";
 
-        tag.src = protocol + "//jwpsrv.com/library/zaIF4JI9EeK2FSIACpYGxA.js";
+        tag.src = "https://jwpsrv.com/library/zaIF4JI9EeK2FSIACpYGxA.js";
         var firstScriptTag = document.getElementsByTagName( "script" )[ 0 ];
         firstScriptTag.parentNode.insertBefore( tag, firstScriptTag );
       }
@@ -52,7 +51,7 @@
       throw "ERROR: HTMLJWPlayerVideoElement requires window.postMessage";
     }
 
-    var self = this,
+    var self = new Popcorn._MediaElementProto(),
       parent = typeof id === "string" ? document.querySelector( id ) : id,
       impl = {
         src: EMPTY_STRING,
@@ -220,6 +219,12 @@
         return;
       }
 
+      // Use any player vars passed on the URL
+      var playerVars = self._util.parseUri( aSrc ).queryKey;
+
+      // Show/hide controls. Sync with impl.controls and prefer URL value.
+      impl.controls = playerVars.controls = playerVars.controls || impl.controls;
+
       impl.src = aSrc;
 
       // Make sure JWPlayer is ready, and if not, register a callback
@@ -236,7 +241,7 @@
         file: aSrc,
         width: "100%",
         height: "100%",
-        controls: false
+        controls: impl.controls
       });
 
       player = jwplayer( parent.id );
@@ -527,41 +532,35 @@
 
               //throw fake DOMException/INDEX_SIZE_ERR
               throw "INDEX_SIZE_ERR: DOM Exception 1";
-            }
+            },
+            length: 1
           };
-
-          Object.defineProperties( timeRanges, {
-            length: {
-              get: function() {
-                return 1;
-              }
-            }
-          });
 
           return timeRanges;
         }
       }
     });
+
+    self._canPlaySrc = Popcorn.HTMLJWPlayerVideoElement._canPlaySrc;
+    self.canPlayType = Popcorn.HTMLJWPlayerVideoElement.canPlayType;
+
+    return self;
   }
 
-  HTMLJWPlayerVideoElement.prototype = new Popcorn._MediaElementProto();
-  HTMLJWPlayerVideoElement.prototype.constructor = HTMLJWPlayerVideoElement;
+  Popcorn.HTMLJWPlayerVideoElement = function( id ) {
+    return new HTMLJWPlayerVideoElement( id );
+  };
 
   // Helper for identifying URLs we know how to play.
-  HTMLJWPlayerVideoElement.prototype._canPlaySrc = function( url ) {
+  Popcorn.HTMLJWPlayerVideoElement._canPlaySrc = function( url ) {
     // Because of the nature of JWPlayer playing all media types,
     // it can potentially play all url formats.
     return "probably";
   };
 
   // This could potentially support everything. It is a bit of a catch all player.
-  HTMLJWPlayerVideoElement.prototype.canPlayType = function( type ) {
+  Popcorn.HTMLJWPlayerVideoElement.canPlayType = function( type ) {
     return "probably";
   };
-
-  Popcorn.HTMLJWPlayerVideoElement = function( id ) {
-    return new HTMLJWPlayerVideoElement( id );
-  };
-  Popcorn.HTMLJWPlayerVideoElement._canPlaySrc = HTMLJWPlayerVideoElement.prototype._canPlaySrc;
 
 }( Popcorn, window, document ));

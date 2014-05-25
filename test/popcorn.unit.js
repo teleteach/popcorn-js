@@ -1050,10 +1050,10 @@ asyncTest( "durationchange", 7, function() {
 
     equal( byStart.length, 2, "byStart should only contain the padding trackevents" );
     equal( byEnd.length, 2, "byEnd should only contain the padding trackevents" );
-    ok( byStart[ 1 ].end === 10, "Padding event value should be equal to new duration. byStart.end" );
-    ok( byStart[ 1 ].start === 10, "Padding event value should be equal to new duration. byStart.start" );
-    ok( byEnd[ 1 ].end === 10, "Padding event value should be equal to new duration. byEnd.end" );
-    ok( byEnd[ 1 ].start === 10, "Padding event value should be equal to new duration. byEnd.start" );
+    ok( byStart[ 1 ].end === 11, "Padding event value should be equal to new duration. byStart.end" );
+    ok( byStart[ 1 ].start === 11, "Padding event value should be equal to new duration. byStart.start" );
+    ok( byEnd[ 1 ].end === 11, "Padding event value should be equal to new duration. byEnd.end" );
+    ok( byEnd[ 1 ].start === 11, "Padding event value should be equal to new duration. byEnd.start" );
 
     Popcorn.removePlugin( "durationPlugin" );
     pop.destroy();
@@ -5712,6 +5712,14 @@ if ( !/file/.test( location.protocol ) ) {
         start();
       }
     );
+  });
+
+  asyncTest( "JSONP Error", 1, function() {
+
+    Popcorn.getJSONP( "http://localhost/404.gif", function( resp ) {
+      ok( resp.error, "Popcorn.getJSONP returns error events." );
+      start();
+    });
   });
 
 } else {

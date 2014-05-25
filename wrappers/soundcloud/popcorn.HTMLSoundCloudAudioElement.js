@@ -13,8 +13,8 @@
   function isSoundCloudReady() {
     // If the SoundCloud Widget API + JS SDK aren't loaded, do it now.
     if( !scLoaded ) {
-      Popcorn.getScript( "//w.soundcloud.com/player/api.js", function() {
-        Popcorn.getScript( "//connect.soundcloud.com/sdk.js", function() {
+      Popcorn.getScript( "https://w.soundcloud.com/player/api.js", function() {
+        Popcorn.getScript( "https://connect.soundcloud.com/sdk.js", function() {
           scReady = true;
 
           // XXX: SoundCloud won't let us use real URLs with the API,
@@ -47,7 +47,7 @@
       throw "ERROR: HTMLSoundCloudAudioElement requires window.postMessage";
     }
 
-    var self = this,
+    var self = new Popcorn._MediaElementProto(),
       parent = typeof id === "string" ? Popcorn.dom.find( id ) : id,
       elem = document.createElement( "iframe" ),
       impl = {
@@ -437,6 +437,20 @@
       playerReady = false;
 
       SC.get( "/resolve", { url: aSrc }, function( data ) {
+        var err;
+        if ( data.errors ) {
+          err = { name: "MediaError" };
+          // Not sure why this is in an array, and how multiple errors should be handled.
+          // For now, I'll just use the first. We just need something.
+          if ( data.errors[ 0 ] ) {
+            if ( data.errors[ 0 ].error_message === "404 - Not Found" ) {
+              err.message = "Video not found.";
+              err.code = MediaError.MEDIA_ERR_NETWORK;
+            }
+          }
+          impl.error = err;
+          self.dispatchEvent( "error" );
+        }
         elem.id = Popcorn.guid( "soundcloud-" );
         elem.width = impl.width;
         elem.height = impl.height;
@@ -670,24 +684,26 @@
         }
       }
     });
+
+    self._canPlaySrc = Popcorn.HTMLSoundCloudAudioElement._canPlaySrc;
+    self.canPlayType = Popcorn.HTMLSoundCloudAudioElement.canPlayType;
+
+    return self;
   }
 
-  HTMLSoundCloudAudioElement.prototype = new Popcorn._MediaElementProto();
+  Popcorn.HTMLSoundCloudAudioElement = function( id ) {
+    return new HTMLSoundCloudAudioElement( id );
+  };
 
   // Helper for identifying URLs we know how to play.
-  HTMLSoundCloudAudioElement.prototype._canPlaySrc = function( url ) {
+  Popcorn.HTMLSoundCloudAudioElement._canPlaySrc = function( url ) {
     return (/(?:https?:\/\/www\.|https?:\/\/|www\.|\.|^)(soundcloud)/).test( url ) ?
       "probably" : EMPTY_STRING;
   };
 
   // We'll attempt to support a mime type of audio/x-soundcloud
-  HTMLSoundCloudAudioElement.prototype.canPlayType = function( type ) {
+  Popcorn.HTMLSoundCloudAudioElement.canPlayType = function( type ) {
     return type === "audio/x-soundcloud" ? "probably" : EMPTY_STRING;
   };
-
-  Popcorn.HTMLSoundCloudAudioElement = function( id ) {
-    return new HTMLSoundCloudAudioElement( id );
-  };
-  Popcorn.HTMLSoundCloudAudioElement._canPlaySrc = HTMLSoundCloudAudioElement.prototype._canPlaySrc;
 
 }( Popcorn, window, document ));

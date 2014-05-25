@@ -77,9 +77,11 @@
     put: function( dictionary ) {
       // For each own property of src, let key be the property key
       // and desc be the property descriptor of the property.
-      Object.getOwnPropertyNames( dictionary ).forEach(function( key ) {
-        this[ key ] = dictionary[ key ];
-      }, this);
+      for ( var key in dictionary ) {
+        if ( dictionary.hasOwnProperty( key ) ) {
+          this[ key ] = dictionary[ key ];
+        }
+      }
     }
   },
 
@@ -253,6 +255,7 @@
         if ( !self.isDestroyed ) {
           self.data.durationChange = function() {
             var newDuration = self.media.duration,
+                newDurationPlus = newDuration + 1,
                 byStart = self.data.trackEvents.byStart,
                 byEnd = self.data.trackEvents.byEnd;
 
@@ -279,13 +282,13 @@
             // References to byEnd/byStart are reset, so accessing it this way is
             // forced upon us.
             self.data.trackEvents.byEnd.push({
-              start: newDuration,
-              end: newDuration
+              start: newDurationPlus,
+              end: newDurationPlus
             });
 
             self.data.trackEvents.byStart.push({
-              start: newDuration,
-              end: newDuration
+              start: newDurationPlus,
+              end: newDurationPlus
             });
           };
 
@@ -341,12 +344,9 @@
         }
       };
 
-      Object.defineProperty( this, "error", {
-        get: function() {
-
-          return self.media.error;
-        }
-      });
+      self.media.addEventListener( "error", function() {
+        self.error = self.media.error;
+      }, false );
 
       // http://www.whatwg.org/specs/web-apps/current-work/#dom-media-readystate
       //
@@ -1202,11 +1202,7 @@
     this.endIndex = 0;
     this.previousUpdateTime = -1;
 
-    Object.defineProperty( this, "count", {
-      get: function() {
-        return this.byStart.length;
-      }
-    });
+    this.count = 1;
   }
 
   function isMatch( obj, key, value ) {
@@ -1277,6 +1273,8 @@
 
       this.parent.data.trackEvents.endIndex++;
     }
+
+    this.count++;
 
   };
 
@@ -1384,6 +1382,7 @@
     this.byStart = byStart;
     this.byEnd = byEnd;
     this.animating = animating;
+    this.count--;
 
     historyLen = this.parent.data.history.length;
 
@@ -2564,8 +2563,20 @@
       head.removeChild( script );
     }, false );
 
-    script.src = url;
+    script.addEventListener( "error",  function( e ) {
+      //  Handling remote script loading callbacks
+      success && success( { error: e } );
 
+      //  Executing for JSONP requests
+      if ( !isScript ) {
+        //  Garbage collect the callback
+        delete window[ callback ];
+      }
+      //  Garbage collect the script resource
+      head.removeChild( script );
+    }, false );
+
+    script.src = url;
     head.insertBefore( script, head.firstChild );
 
     return;
